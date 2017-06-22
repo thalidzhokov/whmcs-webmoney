@@ -202,7 +202,7 @@ function GetBaseCurrency($Currencies = [])
 {
 	$rtn = false;
 
-	if (is_array($Currencies) || !empty($Currencies)) {
+	if (is_array($Currencies) && !empty($Currencies)) {
 
 		foreach ($Currencies as $Currency) {
 
@@ -225,7 +225,7 @@ function GetPaymentCurrency($Currencies = [], $Code = '')
 {
 	$rtn = false;
 
-	if (is_array($Currencies) || !empty($Currencies)) {
+	if (is_array($Currencies) && !empty($Currencies)) {
 
 		foreach ($Currencies as $Currency) {
 
