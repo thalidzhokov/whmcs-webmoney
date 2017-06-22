@@ -2,7 +2,7 @@
 /**
  * Description: Gateway module for WebMoney integration
  * Author: Aleksey Vaganov, Albert Thalidzhokov
- * URL: https://github.com/handaehan/whmcs-webmoney
+ * URL: https://github.com/thalidzhokov/whmcs-webmoney
  */
 
 if (!defined('WHMCS')) {
