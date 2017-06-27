@@ -8,8 +8,8 @@ require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 $gatewayModule = 'webmoney';
 $GATEWAY = getGatewayVariables($gatewayModule);
 
-if (!$GATEWAY["type"]) {
-	die("Module Not Activated");
+if (!$GATEWAY['type']) {
+	die('Module Not Activated');
 }
 
 $returnUrl = $GATEWAY['returnurl'];
@@ -44,7 +44,7 @@ $DateTime = $_REQUEST['LMI_SYS_TRANS_DATE'];
 $hash = $_REQUEST['LMI_HASH'];
 
 switch ($_REQUEST['step']) {
-	case "result":
+	case 'result':
 		$FAmountCorrect = true; //Флаг корректности суммы платежа
 		$FPurseCorrect = true; //Флаг корректности номера кошелька
 
@@ -129,22 +129,27 @@ switch ($_REQUEST['step']) {
 		}
 
 		logTransaction($GATEWAY["name"], $_REQUEST, $trans_desc);
+
 		break;
 
-	case "success":
-		//Платеж выполнен
+	case 'success': //Платеж выполнен
 		checkCbTransID($WMT_transactionid);
-		if ($_REQUEST['M_SIM_MODE'] == 0) addInvoicePayment($invoiceid, $WMT_transactionid, $my_amount, 0, $gatewayModule);
+
+		if ($_REQUEST['M_SIM_MODE'] == 0) {
+			addInvoicePayment($invoiceid, $WMT_transactionid, $my_amount, 0, $gatewayModule);
+		}
+
 		$trans_desc = $gatewayModule . ' Поступление оплаты: Успешно';
 		logTransaction($GATEWAY["name"], $_REQUEST, $trans_desc);
 		echo $page;
+
 		break;
 
-	case "fail":
-		//Платеж не выполнен
+	case 'fail': //Платеж не выполнен
 		$trans_desc = $gatewayModule . ' Поступление оплаты: Ошибка';
 		logTransaction($GATEWAY["name"], $_REQUEST, $trans_desc);
 		echo $page;
+
 		break;
 }
 

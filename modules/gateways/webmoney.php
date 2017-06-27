@@ -55,7 +55,11 @@ function webmoney_config()
 	$configarray['simmode'] = [
 		'FriendlyName' => 'Тестовый режим',
 		'Type' => 'dropdown',
-		'Options' => 'Выкл., Успешные операции, Операции с ошибкой, Комбинированный',
+		'Options' =>
+			'Выкл.' . ',' .
+			'Успешные операции' . ',' .
+			'Операции с ошибкой' . ',' .
+			'Комбинированный',
 		'Description' => 'Выберите режим тестирования'
 	];
 
@@ -178,7 +182,6 @@ function webmoney_link($params = [])
 
 	return $code;
 }
-
 
 
 /**
