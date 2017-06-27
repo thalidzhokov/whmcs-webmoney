@@ -9,28 +9,22 @@ if (!defined('WHMCS')) {
 	die('This file cannot be accessed directly');
 }
 
+define('PATH', __DIR__);
+
 /**
- * @param array $params
- * @return array
+ * @return mixed
  */
-function webmoney_config($params = [])
+function webmoney_config()
 {
+	$apiUser = _webmoney_getAdminUsername();
+
 	$configarray['FriendlyName'] = [
 		'Type' => 'System',
 		'Value' => 'WebMoney'
 	];
-	$configarray['APIUser'] = [
-		'FriendlyName' => 'Пользователь API',
-		'Type' => 'text',
-		'Description' => 'Укажите имя пользователя, с правами делать запросы к API WHMCS',
-		'Default' => 'admin'
-	];
-
-	$adminUsername = GetAdminUsername();
-	$adminUsername = $adminUsername ? $adminUsername : 'admin';
 
 	//получаем список валют и создаем поля для ввода номеров кошельков для каждой валюты
-	$Result = localAPI('getcurrencies', [], $adminUsername);
+	$Result = localAPI('getcurrencies', [], $apiUser);
 
 	if (empty($Result) || $Result['result'] == 'error') {
 		die('Ошибка');
@@ -59,16 +53,16 @@ function webmoney_config($params = [])
 	}
 
 	$configarray['simmode'] = [
-		"FriendlyName" => "Тестовый режим",
-		"Type" => "dropdown",
-		"Options" => "Выкл., Успешные операции, Операции с ошибкой, Комбинированный",
-		"Description" => "Выберите режим тестирования"
+		'FriendlyName' => 'Тестовый режим',
+		'Type' => 'dropdown',
+		'Options' => 'Выкл., Успешные операции, Операции с ошибкой, Комбинированный',
+		'Description' => 'Выберите режим тестирования'
 	];
 
 	$configarray['logging'] = [
-		"FriendlyName" => "Ведение логов",
-		"Type" => "yesno",
-		"Description" => "Отметьте если нужно вести логи"
+		'FriendlyName' => 'Ведение логов',
+		'Type' => 'yesno',
+		'Description' => 'Отметьте если нужно вести логи'
 	];
 
 	return $configarray;
@@ -80,8 +74,10 @@ function webmoney_config($params = [])
  */
 function webmoney_link($params = [])
 {
+	$apiUser = _webmoney_getAdminUsername();
+
 	if ($params['logging'] == 'on') {
-		Logs('webmoney_link params: ' . print_r($params, true));
+		_webmoney_logs('webmoney_link params: ' . print_r($params, true));
 	}
 
 	$invoiceid = $params['invoiceid'];
@@ -105,18 +101,18 @@ function webmoney_link($params = [])
 		$FExchangePurse = 1; //устанавливаем флаг смены валюты и суммы платежа
 
 		//получаем список валют
-		$Result = localAPI('getcurrencies', [], $params['APIUser']);
+		$Result = localAPI('getcurrencies', [], $apiUser);
 
 		if (empty($Result) || $Result['result'] == 'error') {
 			die('Ошибка');
 		}
 
 		if ($params['logging'] == 'on') {
-			Logs('localAPI getcurrencies result: ' . print_r($Result, true));
+			_webmoney_logs('localAPI getcurrencies result: ' . print_r($Result, true));
 		}
 
 		//Находим базовую валюту
-		$BaseCurrency = GetBaseCurrency($Result['currencies']['currency']);
+		$BaseCurrency = _webmoney_getBaseCurrency($Result['currencies']['currency']);
 
 		//Берем номер кошелька для базовой валюты
 		if ($BaseCurrency && $params['purse_' . $BaseCurrency['code']] != "") {
@@ -128,7 +124,7 @@ function webmoney_link($params = [])
 		//Вычисляем размер оплаты в базовой валюте
 		//Для этого берем курс валюты, выбранной пользователем
 
-		$currency = GetPaymentCurrency($Result['currencies']['currency'], $paycurrency);
+		$currency = _webmoney_getPaymentCurrency($Result['currencies']['currency'], $paycurrency);
 		$CurrencyRate = (float)$currency['rate'];
 
 		//Вычисляем размер оплаты в базовой валюте
@@ -140,19 +136,19 @@ function webmoney_link($params = [])
 	}
 
 	switch ($params['simmode']) {
-		case "Выкл.":
+		case 'Выкл.':
 			$simmode = 10;
 			break;
 
-		case "Успешные операции":
+		case 'Успешные операции':
 			$simmode = 0;
 			break;
 
-		case "Операции с ошибкой":
+		case 'Операции с ошибкой':
 			$simmode = 1;
 			break;
 
-		case "Комбинированный":
+		case 'Комбинированный':
 			$simmode = 2;
 			break;
 	}
@@ -183,22 +179,28 @@ function webmoney_link($params = [])
 	return $code;
 }
 
+
+
 /**
- * @param string $Message
+ * Custom functions
  */
-function Logs($Message = '')
+
+/**
+ * @param string $message
+ */
+function _webmoney_logs($message = '')
 {
-	$LogFile = __DIR__ . '/webmoney.log';
-	$File = fopen($LogFile, 'a');
-	fwrite($File, date('Y-m-d H:i:s') . ' - ' . $Message . "\n");
-	fclose($File);
+	$logFile = PATH . '/webmoney.log';
+	$file = fopen($logFile, 'a');
+	fwrite($file, date('Y-m-d H:i:s') . ' - ' . $message . "\n");
+	fclose($file);
 }
 
 /**
  * @param $Currencies
  * @return bool|mixed
  */
-function GetBaseCurrency($Currencies = [])
+function _webmoney_getBaseCurrency($Currencies = [])
 {
 	$rtn = false;
 
@@ -221,7 +223,7 @@ function GetBaseCurrency($Currencies = [])
  * @param $Code
  * @return bool|mixed
  */
-function GetPaymentCurrency($Currencies = [], $Code = '')
+function _webmoney_getPaymentCurrency($Currencies = [], $Code = '')
 {
 	$rtn = false;
 
@@ -242,7 +244,7 @@ function GetPaymentCurrency($Currencies = [], $Code = '')
 /**
  * @return bool
  */
-function GetAdminUsername()
+function _webmoney_getAdminUsername()
 {
 	$rtn = false;
 
